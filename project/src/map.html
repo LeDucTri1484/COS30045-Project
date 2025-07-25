@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Choropleth Map</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f4f9;
+    }
+    nav {
+      background-color: #0056b3;
+      padding: 15px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    nav a {
+      color: #ffffff;
+      margin: 0 15px;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 18px;
+      padding: 10px 20px;
+      border-radius: 5px;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+    nav a:hover {
+      background-color: #003d80;
+      transform: scale(1.1);
+    }
+
+    #controls {
+      display: flex;
+      justify-content: center;
+      margin: 20px auto;
+      gap: 20px;
+      padding: 10px;
+      background: #ffffff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      max-width: 95%;
+    }
+    #controls label {
+      font-size: 16px;
+      color: #333;
+      font-weight: bold;
+    }
+    #controls select {
+      padding: 10px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      transition: box-shadow 0.3s ease;
+    }
+    #controls select:focus {
+      box-shadow: 0 0 5px rgba(0,123,255,0.5);
+      outline: none;
+    }
+    #chart-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 30px auto;
+      width: 95%;
+      height: 550px;
+      position: relative;
+    }
+    #chart {
+      width: 100%;
+      height: 100%;
+      border: 1px solid #ccc;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    }
+    .tooltip {
+      position: absolute;
+      background: #ffffff;
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 14px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      display: none;
+      transition: opacity 0.3s ease, transform 0.2s ease;
+    }
+    .tooltip.visible {
+      display: block;
+      opacity: 1;
+      transform: translateY(-5px);
+    }
+    .dynamic-title {
+      text-align: center;
+      font-size: 28px;
+      font-weight: bold;
+      margin: 15px 0;
+      color: #333;
+    }
+    .legend {
+      position: absolute;
+      bottom: 400px;
+      right: 30px;
+      background: #ffffff;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      font-size: 14px;
+    }
+    .legend-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 5px;
+    }
+    .legend .label {
+      margin: 5px 0;
+      font-size: 12px;
+      font-weight: bold;
+      color: #333;
+    }
+    .legend .color-bar {
+      display: flex;
+      height: 20px;
+      width: 200px;
+      margin-bottom: 10px;
+    }
+    .legend .color-bar div {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="tsp.html">Time Series Plot</a>
+    <a href="map.html">Choropleth Map</a>
+    <a href="scatterplot.html">Scatter Plot & Bubble Chart</a>
+    <a href="bar_boxplot.html">Bar Chart & Box Plot</a>
+  </nav>
+  <div class="dynamic-title" id="mapTitle"></div>
+  <div id="controls">
+    <label>
+      Select Year:
+      <select id="yearSelect"></select>
+    </label>
+    <label>
+      Select Measure:
+      <select id="measureSelect"></select>
+    </label>
+    <label>
+      Select Nutrient:
+      <select id="nutrientSelect">
+        <option value="NITROGEN">NITROGEN</option>
+        <option value="PHOSPHORUS">PHOSPHORUS</option>
+      </select>
+    </label>
+  </div>
+  <div id="chart-container">
+    <div id="chart"></div>
+    <div class="legend" id="legend">
+      <!-- Legend Title -->
+      <div class="legend-title" id="legendTitle">Unit: </div>
+      <div class="color-bar" id="colorBar"></div>
+      <div class="label" id="legendMin"></div>
+      <div class="label" id="legendMax"></div>
+    </div>
+  </div>
+
+  <script>
+    // Load GeoJSON and data
+    Promise.all([
+      d3.json("worlds.geo.json"), 
+      d3.csv("processed_project_dataset.csv")
+    ]).then(function ([geoData, csvData]) {
+      const groupedData = d3.group(
+        csvData,
+        d => d.TIME_PERIOD,
+        d => d.Measure,
+        d => d.NUTRIENTS,
+        d => d["Reference area"]
+      );
+
+      const years = Array.from(new Set(csvData.map(d => d.TIME_PERIOD)));
+      const measures = Array.from(new Set(csvData.map(d => d.Measure)));
+
+      const yearSelect = d3.select("#yearSelect");
+      const measureSelect = d3.select("#measureSelect");
+      const nutrientSelect = d3.select("#nutrientSelect");
+
+      years.forEach(year => yearSelect.append("option").text(year).attr("value", year));
+      measures.forEach(measure => measureSelect.append("option").text(measure).attr("value", measure));
+
+      const width = document.getElementById("chart").clientWidth;
+      const height = document.getElementById("chart").clientHeight;
+      const svg = d3.select("#chart").append("svg").attr("width", width).attr("height", height);
+      const projection = d3.geoNaturalEarth1().scale(200).translate([width / 2, height / 2]);
+      const path = d3.geoPath().projection(projection);
+      const colorScale = d3.scaleSequential().interpolator(d3.interpolatePlasma);
+      const tooltip = d3.select("body").append("div").attr("class", "tooltip");
+
+      const colorBar = d3.select("#colorBar");
+      const legendMin = d3.select("#legendMin");
+      const legendMax = d3.select("#legendMax");
+      const legendTitle = d3.select("#legendTitle");
+
+      const updateLegend = (domain, unit) => {
+        colorBar.selectAll("div").remove();
+        const steps = 10;
+        const stepDomain = d3.range(domain[0], domain[1], (domain[1] - domain[0]) / steps);
+        stepDomain.push(domain[1]); // Ensure the max is included
+
+        stepDomain.forEach(value => {
+          colorBar.append("div")
+            .style("background", colorScale(value))
+            .style("flex", 1);
+        });
+
+        legendMin.text(`Min: ${domain[0].toFixed(2)}`);
+        legendMax.text(`Max: ${domain[1].toFixed(2)}`);
+        legendTitle.text(`Unit: ${unit}`);
+      };
+
+      const updateMap = () => {
+        const selectedYear = yearSelect.node().value;
+        const selectedMeasure = measureSelect.node().value;
+        const selectedNutrient = nutrientSelect.node().value;
+
+        // Update map title
+        d3.select("#mapTitle").text(`${selectedMeasure} of ${selectedNutrient} in ${selectedYear}`);
+
+        // Filter data
+        const yearData = groupedData.get(selectedYear);
+        const measureData = yearData ? yearData.get(selectedMeasure) : new Map();
+        const nutrientData = measureData ? measureData.get(selectedNutrient) : new Map();
+
+        const values = Array.from(nutrientData.values()).map(d => +d[0].OBS_VALUE);
+        const domain = [d3.min(values), d3.max(values)];
+        colorScale.domain(domain);
+
+        const unit = nutrientData.size > 0 ? nutrientData.values().next().value[0]["Unit of measure"] : "N/A";
+
+        updateLegend(domain, unit);
+
+        // Draw map
+        svg.selectAll("path").data(geoData.features)
+          .join("path")
+          .attr("d", path)
+          .attr("fill", d => {
+            const country = nutrientData.get(d.properties.name);
+            return country ? colorScale(+country[0].OBS_VALUE) : "#ccc";
+          })
+          .on("mouseover", function (event, d) {
+            const country = nutrientData.get(d.properties.name);
+            tooltip
+              .style("display", "block")
+              .style("left", (event.pageX + 5) + "px")
+              .style("top", (event.pageY + 5) + "px")
+              .html(`<strong>${d.properties.name}</strong><br>Value: ${country ? country[0].OBS_VALUE : "N/A"}`);
+          })
+          .on("mouseout", () => tooltip.style("display", "none"));
+      };
+
+      yearSelect.on("change", updateMap);
+      measureSelect.on("change", updateMap);
+      nutrientSelect.on("change", updateMap);
+
+      updateMap();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Time Series Plot</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f4f9;
+    }
+    nav {
+      background-color: #0056b3;
+      padding: 15px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    nav a {
+      color: #ffffff;
+      margin: 0 15px;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 18px;
+      padding: 10px 20px;
+      border-radius: 5px;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+    nav a:hover {
+      background-color: #003d80;
+      transform: scale(1.1);
+    }
+    h1 {
+      text-align: center;
+      margin: 20px 0;
+      font-size: 36px;
+      color: #333;
+      text-shadow: 1px 1px 0px rgba(0,0,0,0.1);
+    }
+    #controls {
+      display: flex;
+      justify-content: center;
+      margin: 20px auto;
+      gap: 20px;
+      padding: 10px;
+      background: #ffffff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      max-width: 90%;
+    }
+    #controls label {
+      font-size: 16px;
+      color: #333;
+      font-weight: bold;
+    }
+    #controls select {
+      padding: 10px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      transition: box-shadow 0.3s ease;
+    }
+    #controls select:focus {
+      box-shadow: 0 0 5px rgba(0,123,255,0.5);
+      outline: none;
+    }
+    #chart {
+      margin: 30px auto;
+      width: 95%;
+      height: 700px;
+      border: 1px solid #ccc;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    .tooltip {
+      position: absolute;
+      background: #ffffff;
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 14px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      display: none;
+      transition: opacity 0.3s ease, transform 0.2s ease;
+    }
+    .tooltip.visible {
+      display: block;
+      opacity: 1;
+      transform: translateY(-5px);
+    }
+    .legend {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      max-width: 200px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin: 5px 0;
+    }
+    .legend-color {
+      width: 20px;
+      height: 20px;
+      margin-right: 10px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .legend-item span {
+      font-size: 14px;
+      color: #333;
+    }
+    .chart-title {
+      text-align: center;
+      font-size: 28px;
+      font-weight: bold;
+      margin: 10px 0;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="tsp.html">Time Series Plot</a>
+    <a href="map.html">Choropleth Map</a>
+    <a href="scatterplot.html">Scatter Plot & Bubble Chart</a>
+    <a href="bar_boxplot.html">Bar Chart & Box Plot</a>
+  </nav>
+  <h1>Time Series Plot</h1>
+  <div id="controls">
+    <label>
+      Select Countries:
+      <select id="countrySelect" multiple size="10"></select>
+    </label>
+    <label>
+      Select Measurement Methods:
+      <select id="measurementSelect"></select>
+    </label>
+    <label>
+      Select Nutrients:
+      <select id="nutrientSelect">
+        <option value="NITROGEN">NITROGEN</option>
+        <option value="PHOSPHORUS">PHOSPHORUS</option>
+      </select>
+    </label>
+  </div>
+  <div id="chart">
+    <div class="chart-title" id="chartTitle"></div>
+    <div class="tooltip" id="tooltip"></div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <script>
+    // CSV file location
+    var datasetPath = "processed_project_dataset.csv";
+
+    // Load data from the CSV file
+    d3.csv(datasetPath).then(function (data) {
+      // Flattening and processing data
+      var flattenedData = data.map(d => ({
+        "Reference area": d["Reference area"],
+        TIME_PERIOD: d.TIME_PERIOD,
+        Measure: d.Measure,
+        Nutrient: d.NUTRIENTS,
+        OBS_VALUE: +d.OBS_VALUE * (+d.UNIT_MULT || 1),
+        "Unit of measure": d["Unit of measure"]
+      }));
+
+      // Extract unique countries, measurements, and nutrients
+      var countries = Array.from(new Set(flattenedData.map(d => d["Reference area"])));
+      var measurements = Array.from(new Set(flattenedData.map(d => d.Measure)));
+
+      // Populate dropdowns
+      var countrySelect = d3.select("#countrySelect");
+      var measurementSelect = d3.select("#measurementSelect");
+      var nutrientSelect = d3.select("#nutrientSelect");
+
+      countries.forEach(country => {
+        countrySelect.append("option").text(country).attr("value", country);
+      });
+
+      measurements.forEach(measurement => {
+        measurementSelect.append("option").text(measurement).attr("value", measurement);
+      });
+
+      // Set up chart elements
+      var svg = d3.select("#chart").append("svg")
+        .attr("width", "100%")
+        .attr("height", "100%")
+        .attr("viewBox", "0 0 1200 600");
+
+      var tooltip = d3.select("#tooltip");
+      var xScale = d3.scaleTime().range([50, 1150]);
+      var yScale = d3.scaleLinear().range([550, 50]);
+      var xAxis = svg.append("g").attr("transform", "translate(0,550)");
+      var yAxis = svg.append("g").attr("transform", "translate(50,0)");
+      var yAxisLabel = svg.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -300)
+        .attr("y", 0)
+        .text("");
+
+      var line = d3.line()
+        .x(d => xScale(new Date(d.TIME_PERIOD)))
+        .y(d => yScale(d.OBS_VALUE));
+
+      // Update the chart 
+      var updateChart = function () {
+        var selectedCountries = Array.from(countrySelect.node().selectedOptions).map(option => option.value);
+        var selectedMeasurement = measurementSelect.node().value;
+        var selectedNutrient = nutrientSelect.node().value;
+
+        // Filter data based on selections
+        var filteredData = flattenedData.filter(d =>
+          selectedCountries.includes(d["Reference area"]) &&
+          d.Measure === selectedMeasurement &&
+          d.Nutrient === selectedNutrient
+        );
+
+        // Update chart title
+        d3.select("#chartTitle").text(`${selectedMeasurement} - ${selectedNutrient} over years`);
+
+        if (filteredData.length === 0) {
+          svg.selectAll(".line").remove();
+          d3.select("#legend").html("");
+          return;
+        }
+
+        // Update scales
+        xScale.domain(d3.extent(filteredData, d => new Date(d.TIME_PERIOD)));
+        yScale.domain([0, d3.max(filteredData, d => d.OBS_VALUE)]);
+
+        // Update axes
+        xAxis.transition().duration(600).call(d3.axisBottom(xScale));
+        yAxis.transition().duration(600).call(d3.axisLeft(yScale));
+        yAxisLabel.text(filteredData[0]["Unit of measure"]);
+
+        // Group data by country
+        var groupedByCountry = d3.group(filteredData, d => d["Reference area"]);
+
+        // Create color scale
+        var color = d3.scaleOrdinal().domain(selectedCountries).range(d3.schemeCategory10);
+
+        // Remove old lines
+        svg.selectAll(".line").remove();
+
+        // Add new lines
+        groupedByCountry.forEach((values, key) => {
+          svg.append("path")
+            .datum(values)
+            .attr("class", "line")
+            .attr("fill", "none")
+            .attr("stroke", color(key))
+            .attr("stroke-width", 2)
+            .attr("d", line)
+            .style("opacity", 0)
+            .transition()
+            .duration(600)
+            .style("opacity", 1);
+        });
+
+        // Update legend
+        var legend = d3.select("#legend");
+        legend.html("");
+        selectedCountries.forEach(country => {
+          var legendItem = legend.append("div").attr("class", "legend-item");
+          legendItem.append("div")
+            .attr("class", "legend-color")
+            .style("background-color", color(country));
+          legendItem.append("span").text(country);
+        });
+      };
+
+      // Add event listeners
+      countrySelect.on("change", updateChart);
+      measurementSelect.on("change", updateChart);
+      nutrientSelect.on("change", updateChart);
+    });
+  </script>
+</body>
+</html>
