@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pie Chart</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f4f9;
+    }
+
+    nav {
+      background-color: #0056b3;
+      padding: 15px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    nav a {
+      color: #ffffff;
+      margin: 0 15px;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 18px;
+      padding: 10px 20px;
+      border-radius: 5px;
+    }
+
+    nav a:hover {
+      background-color: #003d80;
+      transform: scale(1.1);
+    }
+
+    h1 {
+      text-align: center;
+      margin: 20px 0;
+      font-size: 36px;
+      color: #333;
+      text-shadow: 1px 1px 0px rgba(0,0,0,0.1);
+    }
+
+    #controls {
+      display: flex;
+      justify-content: center;
+      margin: 20px auto;
+      gap: 20px;
+      padding: 10px;
+      background: #ffffff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      max-width: 94%;
+    }
+
+    #controls label {
+      font-size: 16px;
+      color: #333;
+      font-weight: bold;
+    }
+
+    #controls select {
+      padding: 10px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      transition: box-shadow 0.3s ease;
+    }
+
+    #controls select:focus {
+      box-shadow: 0 0 5px rgba(0,123,255,0.5);
+      outline: none;
+    }
+
+    #chart {
+      margin: 30px auto;
+      width: 95%;
+      height: 700px;
+      border: 1px solid #ccc;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+      position: relative;
+      overflow: hidden; 
+    }
+
+    #chart svg {
+      width: 95%;
+      height: 95%;
+      display: block;
+    }
+
+    .tooltip {
+      position: absolute;
+      background: #ffffff;
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 14px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      display: none;
+    }
+
+    .tooltip.visible {
+      display: block;
+      opacity: 1;
+      transform: translateY(-5px);
+    }
+
+    .legend {
+      position: absolute;
+      width: 140px;
+      top: 100px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      max-width: 200px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin: 5px 0;
+    }
+
+    .legend-color {
+      width: 20px;
+      height: 20px;
+      margin-right: 10px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .legend-item span {
+      font-size: 18px;
+      color: #333;
+    }
+
+    .chart-title {
+      text-align: center;
+      font-size: 28px;
+      font-weight: bold;
+      margin: 10px 0;
+      color: #333;
+    }
+
+    #chart_table {
+      margin: 20px auto;
+      width: 95%;
+      border-collapse: collapse;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    #chart_table th, #chart_table td {
+      padding: 10px;
+      text-align: center;
+      font-size: 16px;
+      border: 1px solid #ccc;
+    }
+
+    #chart_table th {
+      background-color: #0056b3;
+      color: #ffffff;
+    }
+
+    #chart_table td {
+      color: #333;
+    }
+
+    #chart_table tr:nth-child(even) {
+      background-color: #f4f4f9;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="pie.html">Pie Chart</a>
+    <a href="tsp.html">Time Series Plot</a>
+    <a href="map.html">Choropleth Map</a>
+    <a href="scatterplot.html">Scatter Plot</a>
+    <a href="bar.html">Bar Chart</a>
+  </nav>
+
+  <h1>Pie Chart</h1>
+
+  <div id="controls">
+    <label>
+      Select Year:
+      <select id="yearSelect"></select>
+    </label>
+    <label>
+      Select Countries:
+      <select id="countrySelect" multiple size="10"></select>
+    </label>
+    <label>
+      Select Measurement Methods:
+      <select id="measurementSelect"></select>
+    </label>
+    <label>
+      Select Nutrients:
+      <select id="nutrientSelect">
+        <option value="NITROGEN">NITROGEN</option>
+        <option value="PHOSPHORUS">PHOSPHORUS</option>
+        <option value="TOTAL" disabled="true">TOTAL</option> 
+      </select>
+    </label>
+  </div>
+
+  <div id="chart">
+    <div class="chart-title" id="chartTitle"></div>
+    <div class="tooltip" id="tooltip"></div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <table id="chart_table">
+    <thead>
+      <tr>
+        <th>Country</th>
+        <th>Nitrogen Value</th>
+        <th>Phosphorus Value</th>
+        <th>Total Value</th>
+        <th>Country Ratio</th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+
+  <script>
+    var datasetPath = "processed_project_dataset.csv";
+   //mapping process
+    d3.csv(datasetPath).then(function (data) {
+      const processedData = data.map(d => ({
+        year: d.TIME_PERIOD,
+        country: d["Reference area"],
+        nutrient: d.NUTRIENTS,
+        measure: d.Measure,
+        value: +d.OBS_VALUE * (+d.UNIT_MULT || 1),
+      }));
+      
+      const years = Array.from(new Set(processedData.map(d => d.year))).sort();
+      const countries = Array.from(new Set(processedData.map(d => d.country)));
+      const measurements = Array.from(new Set(processedData.map(d => d.measure)));
+
+      const yearSelect = d3.select("#yearSelect");
+      const countrySelect = d3.select("#countrySelect");
+      const measurementSelect = d3.select("#measurementSelect");
+      const nutrientSelect = d3.select("#nutrientSelect");
+  
+      //initiate option value
+      years.forEach(year => {
+        yearSelect.append("option").text(year).attr("value", year);
+      });
+
+      countries.forEach(country => {
+        countrySelect.append("option").text(country).attr("value", country);
+      });
+
+      measurements.forEach(measurement => {
+        measurementSelect.append("option").text(measurement).attr("value", measurement);
+      });
+       
+      //create chart 
+      const svg = d3.select("#chart").append("svg")
+        .attr("viewBox", "0 0 600 600")
+        .attr("preserveAspectRatio", "xMidYMid meet");
+
+      const tooltip = d3.select("#tooltip");
+      const radius = 250;
+      const pieGenerator = d3.pie().value(d => d.value);
+      const arcGenerator = d3.arc().innerRadius(0).outerRadius(radius);
+
+      //update country function 
+      function updateCountry() {
+        const selectedYear = yearSelect.node().value;
+        const selectedMeasurement = measurementSelect.node().value;
+        const selectedNutrient = nutrientSelect.node().value;
+
+        const validCountries = new Set(
+          processedData
+            .filter(d =>
+              d.year === selectedYear &&
+              d.measure === selectedMeasurement &&
+              (selectedNutrient === "TOTAL" ? d.nutrient === "N/A" : d.nutrient === selectedNutrient) &&
+              d.value > 0
+            )
+            .map(d => d.country)
+        );
+        //if have no data then disable it 
+        countrySelect.selectAll("option").each(function () {
+          const option = d3.select(this);
+          const value = option.property("value");
+          const isValid = validCountries.has(value);
+          option.property("disabled", !isValid);
+        });
+      } 
+
+      //update chart function
+      const updateChart = () => {
+        const selectedYear = yearSelect.node().value;
+        const selectedCountries = Array.from(countrySelect.node().selectedOptions).map(option => option.value);
+        const selectedMeasurement = measurementSelect.node().value;
+        const selectedNutrient = nutrientSelect.node().value;
+
+        const filteredData = processedData.filter(d =>
+          d.year === selectedYear &&
+          selectedCountries.includes(d.country) &&
+          d.measure === selectedMeasurement &&
+          (selectedNutrient === "TOTAL" ? d.nutrient === "N/A" : d.nutrient === selectedNutrient) &&
+          d.value > 0
+        );
+
+        const groupedData = d3.rollup(filteredData, v => d3.sum(v, d => d.value), d => d.country);
+
+        const pieData = Array.from(groupedData, ([key, value]) => ({ country: key, value }));
+
+        d3.select("#chartTitle").text(`${selectedMeasurement} - ${selectedNutrient} in ${selectedYear}`); // chart title 
+        
+        // color scaling on pie part 
+        const color = d3.scaleOrdinal()
+          .domain(pieData.map(d => d.country))
+          .range(d3.schemeCategory10);
+
+        svg.selectAll(".arc").remove();
+        svg.selectAll(".label").remove();
+
+        const pieGroup = svg.append("g")
+          .attr("transform", "translate(300,300)");
+
+        const arcs = pieGroup.selectAll(".arc")
+          .data(pieGenerator(pieData));
+
+        const arcEnter = arcs.enter()
+          .append("g")
+          .attr("class", "arc");
+
+        arcEnter.append("path")
+          .attr("d", arcGenerator)
+          .attr("fill", d => color(d.data.country))
+          .on("mouseover", (event, d) => {
+            tooltip.style("display", "block")
+              .html(`<strong>${d.data.country}</strong>: ${d.data.value.toFixed(2)} (${((d.data.value / d3.sum(pieData, d => d.value)) * 100).toFixed(1)}%)`)
+              .style("left", `${event.pageX + 10}px`)
+              .style("top", `${event.pageY - 25}px`);
+          })
+          .on("mouseout", () => { 
+            tooltip.style("display", "none");
+          })
+          .transition()
+          .duration(750)
+          .attrTween("d", function(d) {
+            const interpolate = d3.interpolate(
+              { startAngle: d.startAngle, endAngle: d.startAngle },
+              { startAngle: d.startAngle, endAngle: d.endAngle }
+            );
+            return function(t) {
+              return arcGenerator(interpolate(t));
+            };
+          });
+        // proportion text in the pie 
+        arcEnter.append("text")
+          .attr("transform", d => `translate(${arcGenerator.centroid(d)})`)
+          .attr("text-anchor", "middle")
+          .attr("font-size", "14px")
+          .attr("font-weight", "bold")
+          .text(d => `${((d.data.value / d3.sum(pieData, d => d.value)) * 100).toFixed(1)}%`);
+        
+        //legends
+        const legend = d3.select("#legend");
+        legend.html("");
+        pieData.forEach(d => {
+          const legendItem = legend.append("div").attr("class", "legend-item");
+          legendItem.append("div")
+            .attr("class", "legend-color")
+            .style("background-color", color(d.country));
+          legendItem.append("span").text(d.country);
+        });
+
+        // Update table
+        const tableBody = d3.select("#chart_table tbody");
+        tableBody.html("");
+
+        const totalSum = d3.sum(pieData, d => d.value);
+
+        pieData.forEach(d => {
+          const nitrogenValue = selectedNutrient === "NITROGEN" ? d.value : 0;
+          const phosphorusValue = selectedNutrient === "PHOSPHORUS" ? d.value : 0;
+          const totalValue = d.value;
+          const countryRatio = totalSum > 0 ? (d.value / totalSum * 100).toFixed(2) + "%" : "N/A";
+
+          tableBody.append("tr")
+            .html(`
+              <td>${d.country}</td>
+              <td>${nitrogenValue.toFixed(2)}</td>
+              <td>${phosphorusValue.toFixed(2)}</td>
+              <td>${totalValue.toFixed(2)}</td>
+              <td>${countryRatio}</td>
+            `);
+        });
+      };
+
+      yearSelect.on("change", () => { // when change year update country and chart 
+        updateCountry();
+        updateChart();
+      });
+
+      function clearSelectedCountries() {
+        countrySelect.selectAll("option").property("selected", false);
+      }
+      
+      measurementSelect.on("change", function () { //update when measurement methods option changed 
+        clearSelectedCountries();
+        var selectedMeasurement = measurementSelect.node().value;
+        
+        //if countries have nutrients value "N/A" then print obs value and disable other nutrients option when in that measurement methods
+        if (
+          processedData.some(d => d.measure === selectedMeasurement && (!d.nutrient.includes("NITROGEN") 
+          && !d.nutrient.includes("PHOSPHORUS") && d.nutrient.includes("N/A")))
+        ) {
+          nutrientSelect.selectAll("option").property("disabled", true);
+          nutrientSelect.node().value = "TOTAL";
+        } else {
+          nutrientSelect.selectAll("option").property("disabled", false);
+          nutrientSelect.select('option[value="TOTAL"]').property("disabled", true);
+          nutrientSelect.node().value = nutrientSelect.selectAll("option").nodes()[0].value;
+        }
+
+        updateCountry();
+        updateChart();
+      });
+
+      nutrientSelect.on("change", () => { //update when nutrient option changed
+        updateCountry();
+        updateChart();
+      });
+
+      countrySelect.on("change", updateChart); //update when countries option changed
+
+      updateCountry();
+      updateChart();
+    });
+  </script>
+</body>
+</html>

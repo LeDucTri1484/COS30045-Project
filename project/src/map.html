@@ -44,7 +44,7 @@
       background: #ffffff;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       border-radius: 8px;
-      max-width: 95%;
+      max-width: 94%;
     }
     #controls label {
       font-size: 16px;
@@ -73,7 +73,7 @@
     }
     #chart {
       width: 100%;
-      height: 100%;
+      height: 105%;
       border: 1px solid #ccc;
       background-color: #ffffff;
       border-radius: 8px;
@@ -137,11 +137,11 @@
 </head>
 <body>
   <nav>
-    <a href="index.html">Home</a>
+    <a href="pie.html">Pie Chart</a>
     <a href="tsp.html">Time Series Plot</a>
     <a href="map.html">Choropleth Map</a>
-    <a href="scatterplot.html">Scatter Plot & Bubble Chart</a>
-    <a href="bar_boxplot.html">Bar Chart & Box Plot</a>
+    <a href="scatterplot.html">Scatter Plot</a>
+    <a href="bar.html">Bar Chart</a>
   </nav>
   <div class="dynamic-title" id="mapTitle"></div>
   <div id="controls">
@@ -158,6 +158,7 @@
       <select id="nutrientSelect">
         <option value="NITROGEN">NITROGEN</option>
         <option value="PHOSPHORUS">PHOSPHORUS</option>
+        <option value="TOTAL" disabled="true">TOTAL</option> 
       </select>
     </label>
   </div>
@@ -178,16 +179,11 @@
       d3.json("worlds.geo.json"), 
       d3.csv("processed_project_dataset.csv")
     ]).then(function ([geoData, csvData]) {
-      const groupedData = d3.group(
-        csvData,
-        d => d.TIME_PERIOD,
-        d => d.Measure,
-        d => d.NUTRIENTS,
-        d => d["Reference area"]
-      );
-
+      // initalization process and mapping 
+      const flattenedData = csvData;
       const years = Array.from(new Set(csvData.map(d => d.TIME_PERIOD)));
       const measures = Array.from(new Set(csvData.map(d => d.Measure)));
+      const Nutrient = Array.from(new Set(csvData.map(d => d.NUTRIENTS)));
 
       const yearSelect = d3.select("#yearSelect");
       const measureSelect = d3.select("#measureSelect");
@@ -209,8 +205,10 @@
       const legendMax = d3.select("#legendMax");
       const legendTitle = d3.select("#legendTitle");
 
-      const updateLegend = (domain, unit) => {
+      const updateLegend = (domain, unit) => {// update legends 
         colorBar.selectAll("div").remove();
+        if (domain[0] === undefined || domain[1] === undefined) return;
+
         const steps = 10;
         const stepDomain = d3.range(domain[0], domain[1], (domain[1] - domain[0]) / steps);
         stepDomain.push(domain[1]); // Ensure the max is included
@@ -225,51 +223,75 @@
         legendMax.text(`Max: ${domain[1].toFixed(2)}`);
         legendTitle.text(`Unit: ${unit}`);
       };
-
+      //update map function
       const updateMap = () => {
         const selectedYear = yearSelect.node().value;
-        const selectedMeasure = measureSelect.node().value;
+        const selectedMeasurement = measureSelect.node().value;
         const selectedNutrient = nutrientSelect.node().value;
 
-        // Update map title
-        d3.select("#mapTitle").text(`${selectedMeasure} of ${selectedNutrient} in ${selectedYear}`);
-
         // Filter data
-        const yearData = groupedData.get(selectedYear);
-        const measureData = yearData ? yearData.get(selectedMeasure) : new Map();
-        const nutrientData = measureData ? measureData.get(selectedNutrient) : new Map();
-
-        const values = Array.from(nutrientData.values()).map(d => +d[0].OBS_VALUE);
+        const filteredData = flattenedData.filter(d =>
+          d.TIME_PERIOD === selectedYear &&
+          d.Measure === selectedMeasurement &&
+          (selectedNutrient === "TOTAL" ? d.NUTRIENTS === "N/A" : d.NUTRIENTS === selectedNutrient)
+        );
+        
+        //map domain range and map value 
+        const values = filteredData.map(d => +d.OBS_VALUE);
         const domain = [d3.min(values), d3.max(values)];
         colorScale.domain(domain);
 
-        const unit = nutrientData.size > 0 ? nutrientData.values().next().value[0]["Unit of measure"] : "N/A";
+        const unit = filteredData.length > 0 ? filteredData[0]["Unit of measure"] : "N/A";
 
         updateLegend(domain, unit);
+
+        // Update map title
+        d3.select("#mapTitle").text(`${selectedMeasurement} of ${selectedNutrient} in ${selectedYear}`);
 
         // Draw map
         svg.selectAll("path").data(geoData.features)
           .join("path")
           .attr("d", path)
           .attr("fill", d => {
-            const country = nutrientData.get(d.properties.name);
-            return country ? colorScale(+country[0].OBS_VALUE) : "#ccc";
+            const countryData = filteredData.find(f => f["Reference area"] === d.properties.name);
+            return countryData ? colorScale(+countryData.OBS_VALUE) : "#ccc";
           })
           .on("mouseover", function (event, d) {
-            const country = nutrientData.get(d.properties.name);
+            const countryData = filteredData.find(f => f["Reference area"] === d.properties.name);
             tooltip
               .style("display", "block")
               .style("left", (event.pageX + 5) + "px")
               .style("top", (event.pageY + 5) + "px")
-              .html(`<strong>${d.properties.name}</strong><br>Value: ${country ? country[0].OBS_VALUE : "N/A"}`);
+              .html(`<strong>${d.properties.name}</strong><br>Value: ${countryData ? countryData.OBS_VALUE : "N/A"}`);
           })
           .on("mouseout", () => tooltip.style("display", "none"));
       };
+      measureSelect.on("change", function () {// update on change measurement methods
+        var selectedMeasurement = measureSelect.node().value;
+
+        // Check if the selected measurement meets either condition
+        if (
+          flattenedData.some(d => d.Measure === selectedMeasurement && (!d.NUTRIENTS.includes("NITROGEN") 
+          && !d.NUTRIENTS.includes("PHOSPHORUS") && d.NUTRIENTS.includes("N/A")))
+        ) {
+          // If the selected measurement matches the conditions, enable only "TOTAL"
+          nutrientSelect.selectAll("option").property("disabled", true);
+          nutrientSelect.node().value = "TOTAL";
+        } else {
+          // Reset nutrient options except "TOTAL"
+          nutrientSelect.selectAll("option").property("disabled", false); // Re-enable all options
+          nutrientSelect.select('option[value="TOTAL"]').property("disabled", true); // Disable only the "TOTAL" option
+          nutrientSelect.node().value = nutrientSelect.selectAll("option").nodes()[0].value; // Select the first option
+        }
+
+        updateMap();
+      });
+
 
       yearSelect.on("change", updateMap);
-      measureSelect.on("change", updateMap);
       nutrientSelect.on("change", updateMap);
 
+      // Initialize map and legend
       updateMap();
     });
   </script>
