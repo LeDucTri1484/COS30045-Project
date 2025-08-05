@@ -23,6 +23,7 @@
     }
 
     nav a {
+      font-family: Verdana, Geneva, Tahoma, sans-serif;
       color: #ffffff;
       margin: 0 15px;
       text-decoration: none;
@@ -36,49 +37,79 @@
       background-color: #003d80;
       transform: scale(1.1);
     }
-
     h1 {
+      font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
       text-align: center;
-      margin: 20px 0;
-      font-size: 36px;
-      color: #333;
-      text-shadow: 1px 1px 0px rgba(0,0,0,0.1);
+      font-size: 48px;
+      font-weight: 800;
+      margin: 40px 0 20px;
+      color: #002855;
+      letter-spacing: 0.5px;
     }
 
     #controls {
       display: flex;
+      flex-wrap: wrap;
       justify-content: center;
-      margin: 20px auto;
-      gap: 20px;
-      padding: 10px;
+      gap: 24px;
+      padding: 20px;
       background: #ffffff;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      border-radius: 8px;
-      max-width: 94%;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+      border-radius: 12px;
+      max-width: 96%;
+      margin: 30px auto;
+      transition: all 0.3s ease-in-out;
     }
 
     #controls label {
-      font-size: 16px;
-      color: #333;
-      font-weight: bold;
-    }
-
-    #controls select {
-      padding: 10px;
-      font-size: 14px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
+      display: flex;
+      flex-direction: column;
+      font-size: 15px;
+      color: #222;
+      font-weight: 600;
+      background-color: #f9f9f9;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid #e0e0e0;
+      min-width: 230px;
       transition: box-shadow 0.3s ease;
     }
 
+    #controls label:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    #controls select {
+      margin-top: 8px;
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background-color: #fff;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
     #controls select:focus {
-      box-shadow: 0 0 5px rgba(0,123,255,0.5);
+      border-color: #007bff;
+      box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
       outline: none;
     }
 
+    #countrySelect {
+      height: 40px;
+      overflow-y: hidden;
+    }
+
+    #countrySelect:focus {
+      height: 200px;
+      overflow-y: auto;
+    }
+
+
     #chart {
       margin: 30px auto;
-      width: 95%;
+      width: 98%;
       height: 700px;
       border: 1px solid #ccc;
       background-color: #ffffff;
@@ -144,16 +175,25 @@
     }
 
     .chart-title {
+      font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
       text-align: center;
-      font-size: 28px;
-      font-weight: bold;
-      margin: 10px 0;
-      color: #333;
+      font-size: 26px;
+      font-weight: 700;
+      color: #444;
+      margin: 20px 0;
+      padding: 12px;
+      background: #f0f4ff;
+      border-left: 6px solid #0056b3;
+      border-radius: 8px;
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
     }
 
     #chart_table {
       margin: 20px auto;
-      width: 95%;
+      width: 98%;
       border-collapse: collapse;
       background-color: #ffffff;
       border-radius: 8px;
@@ -179,6 +219,23 @@
 
     #chart_table tr:nth-child(even) {
       background-color: #f4f4f9;
+    }
+    .table-title-container {
+      text-align: center;
+      margin: 20px auto;
+      padding: 10px;
+      background-color: #0056b3;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      width: 97%;
+    }
+
+    .table-title {
+      margin: 0;
+      font-size: 24px;
+      font-weight: bold;
+      color: #ffffff;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
     }
   </style>
 </head>
@@ -221,7 +278,9 @@
     <div class="tooltip" id="tooltip"></div>
     <div class="legend" id="legend"></div>
   </div>
-
+  <div class="table-title-container">
+  <h2 class="table-title" id="tableTitle">Table Title</h2>
+  </div>
   <table id="chart_table">
     <thead>
       <tr>
@@ -272,7 +331,7 @@
        
       //create chart 
       const svg = d3.select("#chart").append("svg")
-        .attr("viewBox", "0 0 600 600")
+        .attr("viewBox", "0 0 600 620")
         .attr("preserveAspectRatio", "xMidYMid meet");
 
       const tooltip = d3.select("#tooltip");
@@ -389,7 +448,7 @@
         // Update table
         const tableBody = d3.select("#chart_table tbody");
         tableBody.html("");
-
+        d3.select("#tableTitle").text(`Statistic of ${selectedMeasurement}(${selectedNutrient}) in ${selectedYear}`);
         const totalSum = d3.sum(pieData, d => d.value);
 
         pieData.forEach(d => {
@@ -447,7 +506,7 @@
       countrySelect.on("change", updateChart); //update when countries option changed
 
       updateCountry();
-      updateChart();
+      //updateChart();  
     });
   </script>
 </body>

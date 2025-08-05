@@ -23,6 +23,7 @@
     }
 
     nav a {
+      font-family: Verdana, Geneva, Tahoma, sans-serif;
       color: #ffffff;
       margin: 0 15px;
       text-decoration: none;
@@ -38,10 +39,13 @@
     }
 
     h1 {
+      font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
       text-align: center;
-      margin: 20px 0;
-      font-size: 36px;
-      color: #333;
+      font-size: 48px;
+      font-weight: 800;
+      margin: 40px 0 20px;
+      color: #002855;
+      letter-spacing: 0.5px;
     }
 
     #controls {
@@ -79,40 +83,59 @@
       box-shadow: 0 0 5px rgba(0,123,255,0.5);
       outline: none;
     }
+    #countrySelect {
+      height: 40px;
+      overflow-y: hidden;
+    }
+
+    #countrySelect:focus {
+      height: 200px;
+      overflow-y: auto;
+    }
+
 
     select[multiple] {
       height: 120px;
       overflow-y: auto;
     }
 
-#scatterContainer {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-  width: 100%;
-  box-sizing: border-box;
-}
+    #scatterContainer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      width: 101%;
+      box-sizing: border-box;
+    }
 
-#chart {
-  width: 100%;
-  max-width: 1710px; /* increased total width */
-  height: 740px;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  position: relative;
-  overflow: visible;
-  box-sizing: border-box;
-}
+    #chart {
+      width: 100%;
+      max-width: 1710px; 
+      height: 740px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      position: relative;
+      overflow: visible;
+      box-sizing: border-box;
+    }
 
 
     .chart-title {
+      font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
       text-align: center;
-      font-size: 24px;
-      font-weight: bold;
-      margin: 10px 0;
-      color: #333;
+      font-size: 26px;
+      font-weight: 700;
+      color: #444;
+      margin: 20px 0;
+      padding: 12px;
+      background: #f0f4ff;
+      border-left: 6px solid #0056b3;
+      border-radius: 8px;
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
     }
 
     .tooltip {
@@ -236,7 +259,7 @@ d3.csv(datasetPath).then(function (data) {
   var svg = d3.select("#chart").append("svg")
     .attr("width", "100%")
     .attr("height", "100%")
-    .attr("viewBox", "-50 0 1500 640");
+    .attr("viewBox", "-50 0 1500 700");
 
 
   var tooltip = d3.select("#tooltip");

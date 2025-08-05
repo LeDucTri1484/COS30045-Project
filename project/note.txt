@@ -1,0 +1,40 @@
+Navigation bar: move between pages
+
+control bar: 
+
+country: select one or multiple countries based on available data. those without data or unmatched requirement data will be disable ( negative value for pie chart for example)
+
+
+Nutrient Measurement: select measurement methods. this will display OBS_VALUE* unit multiplier of that single method. you can select multiple methods for scatterplot. 
+
+
+Year: showing data of a single year for all of the selected measurements and countries.
+
+NUTRIENTS: contain phosphorus and nitrogen display based on selected country and method. TOTAL is only available when there is no Nitrogen or phosphorus in the NUTRIENTS column, it will show OBS_VALUE. option "BOTH Nutrient only available on the bar chart, it will show both nutrient and phosphorus for each country in a selected year.
+
+
+
+Chart: 
+
+Pie chart: will not work with negative OBS_VALUE or no OBS value.
+the chart presentation will based on selected year, one or multiple countries , measurement methods and nutrients. There is also a table for data analytics below the chart and chart title are generated based on above selection.
+
+
+Time series plot: since 0 is not really representative on this chart, data with 0 will be disabled. the chart presentation will based on one or multiple countries , measurement methods and nutrients. There is also a table for data analytics below the chart and chart title are generated based on above selection.
+
+
+Chrolopeth Map: Pie chart: will not work with no OBS value. the chart presentation will based on selected year, measurement methods and nutrients. There is a chart title are generated based on above selection.
+
+Scatterplot: work with all data. the chart presentation will based on  one or multiple countries , 2 measurement methods for both axis and nutrients. Chart title are generated based on above selection.
+
+
+bar chart: Time series plot: since 0 is not really representative on this chart, data with 0 will be disabled. the chart presentation will based on one or multiple countries , measurement methods and nutrients. There is also a table for data analytics below the chart and chart title are generated based on above selection.
+
+Note: 
+-Country with be unselected when changing measurement methods.
+
+-Total will be disabled by default and only available when selecting data with "N/A" on nutrients column 
+
+-Table show the nutrients OBS_VALUE and and ratio between nutrients. Total is the sum value of both nutrients or the column with nutrient as "N/A". Country ratio are the ratio of total between countries. 
+
+

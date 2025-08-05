@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
   <title>Time Series Plot</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
-  <style>
+ <style>
     body {
       font-family: Arial, sans-serif;
       margin: 0;
@@ -23,6 +25,7 @@
     }
 
     nav a {
+      font-family: Verdana, Geneva, Tahoma, sans-serif;
       color: #ffffff;
       margin: 0 15px;
       text-decoration: none;
@@ -32,66 +35,109 @@
       border-radius: 5px;
     }
 
-    nav a:hover {
-      background-color: #003d80;
-      transform: scale(1.1);
-    }
+      nav a:hover {
+        background-color: #e0e0e0; 
+        color: #333;              
+        transform: scale(1.05);   
+      }
 
     h1 {
+      font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
       text-align: center;
-      margin: 20px 0;
-      font-size: 36px;
-      color: #333;
-      text-shadow: 1px 1px 0px rgba(0,0,0,0.1);
+      font-size: 48px;
+      font-weight: 800;
+      margin: 40px 0 20px;
+      color: #002855;
+      letter-spacing: 0.5px;
     }
 
     #controls {
       display: flex;
+      flex-wrap: wrap;
       justify-content: center;
-      margin: 20px auto;
-      gap: 20px;
-      padding: 10px;
+      gap: 24px;
+      padding: 20px;
       background: #ffffff;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      border-radius: 8px;
-      max-width: 94%;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+      border-radius: 12px;
+      max-width: 96%;
+      margin: 30px auto;
+      transition: all 0.3s ease-in-out;
     }
 
     #controls label {
-      font-size: 16px;
-      color: #333;
-      font-weight: bold;
-    }
-
-    #controls select {
-      padding: 10px;
-      font-size: 14px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
+      display: flex;
+      flex-direction: column;
+      font-size: 15px;
+      color: #222;
+      font-weight: 600;
+      background-color: #f9f9f9;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid #e0e0e0;
+      min-width: 230px;
       transition: box-shadow 0.3s ease;
     }
 
+    #controls label:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    #controls select {
+      margin-top: 8px;
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background-color: #fff;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
     #controls select:focus {
-      box-shadow: 0 0 5px rgba(0,123,255,0.5);
+      border-color: #007bff;
+      box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
       outline: none;
     }
+    #countrySelect {
+      height: 40px;
+      overflow-y: hidden;
+    }
+
+    #countrySelect:focus {
+      height: 200px;
+      overflow-y: auto;
+    }
+
+
+
 
     #chart {
       margin: 30px auto;
       width: 95%;
-      height: 700px;
-      border: 1px solid #ccc;
+      height: 650px;
       background-color: #ffffff;
       border-radius: 8px;
       box-shadow: 0 3px 6px rgba(0,0,0,0.1);
       position: relative;
-      overflow: hidden; 
+      overflow: hidden;
+      border: 3px solid #ccc; /* Add outline */
     }
 
     #chart svg {
-      width: 95%;
-      height: 95%;
+      width: 100%;
+      height: 100%;
       display: block;
+    }
+
+    .grid line {
+      stroke: #ddd;
+      stroke-opacity: 0.8;
+      shape-rendering: crispEdges;
+    }
+
+    .grid path {
+      stroke-width: 0;
     }
 
     .tooltip {
@@ -144,11 +190,39 @@
     }
 
     .chart-title {
+      font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
       text-align: center;
-      font-size: 28px;
+      font-size: 26px;
+      font-weight: 700;
+      color: #444;
+      margin: 20px 0;
+      padding: 12px;
+      background: #f0f4ff;
+      border-left: 6px solid #0056b3;
+      border-radius: 8px;
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    }
+
+
+    .table-title-container {
+      text-align: center;
+      margin: 20px auto;
+      padding: 10px;
+      background-color: #0056b3;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      width: 94%;
+    }
+
+    .table-title {
+      margin: 0;
+      font-size: 24px;
       font-weight: bold;
-      margin: 10px 0;
-      color: #333;
+      color: #ffffff;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
     }
 
     #chart_table {
@@ -196,7 +270,7 @@
   <div id="controls">
     <label>
       Select Countries:
-      <select id="countrySelect" multiple size="10"></select>
+      <select id="countrySelect" multiple></select> 
     </label>
     <label>
       Select Measurement Methods:
@@ -210,6 +284,10 @@
         <option value="TOTAL" disabled="true">TOTAL</option> 
       </select>
     </label>
+    <label>
+      Select Year(For Table):
+      <select id="yearSelect"></select>
+    </label>
   </div>
 
   <div id="chart">
@@ -217,7 +295,9 @@
     <div class="tooltip" id="tooltip"></div>
     <div class="legend" id="legend"></div>
   </div>
-
+  <div class="table-title-container">
+  <h2 class="table-title" id="tableTitle">Table Title</h2>
+  </div>
   <table id="chart_table">
     <thead>
       <tr>
@@ -232,10 +312,9 @@
     </tbody>
   </table>
 
-  <script>
-    var datasetPath = "processed_project_dataset.csv";//path
-    
-    //mapping process
+<script>
+    var datasetPath = "processed_project_dataset.csv";
+
     d3.csv(datasetPath).then(function (data) {
       var flattenedData = data.map(d => ({
         "Reference area": d["Reference area"],
@@ -246,15 +325,16 @@
         MEASURE: d.MEASURE,
         "Unit of measure": d["Unit of measure"],
       }));
-  
+
       var countries = Array.from(new Set(flattenedData.map(d => d["Reference area"])));
       var measurements = Array.from(new Set(flattenedData.map(d => d.Measure)));
+      var years = Array.from(new Set(flattenedData.map(d => d.TIME_PERIOD))).sort();
 
       var countrySelect = d3.select("#countrySelect");
       var measurementSelect = d3.select("#measurementSelect");
       var nutrientSelect = d3.select("#nutrientSelect");
+      var yearSelect = d3.select("#yearSelect");
 
-      //initialize option value 
       countries.forEach(country => {
         countrySelect.append("option").text(country).attr("value", country);
       });
@@ -263,8 +343,12 @@
         measurementSelect.append("option").text(measurement).attr("value", measurement);
       });
 
+      years.forEach(year => {
+        yearSelect.append("option").text(year).attr("value", year);
+      });
+
       var svg = d3.select("#chart").append("svg")
-        .attr("viewBox", "0 0 1200 600")
+        .attr("viewBox", "0 0 1200 680")
         .attr("preserveAspectRatio", "xMidYMid meet");
 
       var tooltip = d3.select("#tooltip");
@@ -273,7 +357,28 @@
       var xAxis = svg.append("g").attr("transform", "translate(0,550)");
       var yAxis = svg.append("g").attr("transform", "translate(50,0)");
 
-      //x axis label
+      function drawGridlines(svg, xScale, yScale) {
+      const xGrid = d3.axisBottom(xScale)
+        .tickSize(-500) // Grid height
+        .tickFormat("")
+        .ticks(10);
+
+      const yGrid = d3.axisLeft(yScale)
+        .tickSize(-1100) // Grid width
+        .tickFormat("")
+        .ticks(10);
+
+      svg.append("g")
+        .attr("class", "grid")
+        .attr("transform", "translate(0,550)")
+        .call(xGrid);
+
+      svg.append("g")
+        .attr("class", "grid")
+        .attr("transform", "translate(50,0)")
+        .call(yGrid);
+    }
+
       var yAxisLabel = svg.append("text")
         .attr("text-anchor", "middle")
         .attr("transform", "rotate(-90)")
@@ -283,10 +388,11 @@
         .attr("fill", "#333");
 
       var line = d3.line()
+         
         .x(d => xScale(new Date(d.TIME_PERIOD)))
         .y(d => yScale(d.OBS_VALUE));
 
-      var updateCountry = function () { //update country function
+      function updateCountry() {
         var selectedMeasurement = measurementSelect.node().value;
         var selectedNutrient = nutrientSelect.node().value;
 
@@ -294,24 +400,72 @@
           var option = d3.select(this);
           var country = option.property("value");
 
-          // Check if data exists for the country with the selected list
           var hasData = flattenedData.some(d =>
             d["Reference area"] === country &&
             d.Measure === selectedMeasurement &&
             (selectedNutrient === "TOTAL" ? d.Nutrient === "N/A" : d.Nutrient === selectedNutrient) &&
-            d.OBS_VALUE > 0 // i assume 0 record are not informative and will be excluded in option (if you assume its informative you can comment this line)
+            d.OBS_VALUE != 0
           );
 
-          if (hasData) {
-            option.property("disabled", false);
-          } else {
-            option.property("disabled", true);
-          }
+          option.property("disabled", !hasData);
         });
-      };
+      }
 
-      //update chart function 
-      var updateChart = function () {
+      function updateTable() {
+        var selectedYear = yearSelect.node().value;
+        var selectedCountries = Array.from(countrySelect.node().selectedOptions).map(option => option.value);
+        var selectedMeasurement = measurementSelect.node().value;
+        var selectedNutrient = nutrientSelect.node().value;
+
+        d3.select("#tableTitle").text(`Statistic of ${selectedMeasurement}(${selectedNutrient}) in ${selectedYear}`);
+
+        var filteredData = flattenedData.filter(d =>
+          selectedCountries.includes(d["Reference area"]) &&
+          d.Measure === selectedMeasurement &&
+          (selectedNutrient === "TOTAL" ? d.Nutrient === "N/A" : d.Nutrient === selectedNutrient) &&
+          d.TIME_PERIOD === selectedYear
+        );
+
+        var groupedByCountry = d3.group(filteredData, d => d["Reference area"]);
+
+        var tableBody = d3.select("#chart_table tbody");
+        tableBody.html("");
+
+        var totalSum = 0;
+        groupedByCountry.forEach((values, country) => {
+          var nitrogen = values.find(d => d.Nutrient === "NITROGEN")?.OBS_VALUE || 0;
+          var phosphorus = values.find(d => d.Nutrient === "PHOSPHORUS")?.OBS_VALUE || 0;
+          var total;
+
+          if (selectedNutrient === "NITROGEN") total = nitrogen;
+          else if (selectedNutrient === "PHOSPHORUS") total = phosphorus;
+          else if (selectedNutrient === "TOTAL") total = values.find(d => d.Nutrient === "N/A")?.OBS_VALUE || 0;
+
+          totalSum += total;
+        });
+
+        groupedByCountry.forEach((values, country) => {
+          var nitrogen = values.find(d => d.Nutrient === "NITROGEN")?.OBS_VALUE || 0;
+          var phosphorus = values.find(d => d.Nutrient === "PHOSPHORUS")?.OBS_VALUE || 0;
+          var total;
+
+          if (selectedNutrient === "NITROGEN") total = nitrogen;
+          else if (selectedNutrient === "PHOSPHORUS") total = phosphorus;
+          else if (selectedNutrient === "TOTAL") total = values.find(d => d.Nutrient === "N/A")?.OBS_VALUE || 0;
+
+          var countryRatio = totalSum > 0 ? (total / totalSum * 100).toFixed(2) + "%" : "N/A";
+
+          tableBody.append("tr").html(`
+            <td>${country}</td>
+            <td>${nitrogen.toFixed(2)}</td>
+            <td>${phosphorus.toFixed(2)}</td>
+            <td>${total.toFixed(2)}</td>
+            <td>${countryRatio}</td>
+          `);
+        });
+      }
+
+      function updateChart() {
         var selectedCountries = Array.from(countrySelect.node().selectedOptions).map(option => option.value);
         var selectedMeasurement = measurementSelect.node().value;
         var selectedNutrient = nutrientSelect.node().value;
@@ -321,46 +475,71 @@
           d.Measure === selectedMeasurement &&
           (selectedNutrient === "TOTAL" ? d.Nutrient === "N/A" : d.Nutrient === selectedNutrient)
         );
- 
-        d3.select("#chartTitle").text(`${selectedMeasurement} - ${selectedNutrient} over years`); //update tile 
+   
+        d3.select("#chartTitle").text(`${selectedMeasurement} - ${selectedNutrient} over years`);
         yAxisLabel.text(filteredData[0]?.["Unit of measure"] || '');
+        svg.selectAll(".grid").remove(); // clear old gridlines
+        drawGridlines(svg, xScale, yScale);
 
-        // if obs_value have no data then not intialize chart 
         if (filteredData.length === 0) {
-          svg.selectAll(".line").remove();
+          svg.selectAll(".line, .dot").remove();
           d3.select("#legend").html("");
           d3.select("#chart_table tbody").html("");
           return;
         }
-        // axis domain
-        xScale.domain(d3.extent(filteredData, d => new Date(d.TIME_PERIOD)));
-        yScale.domain([d3.min(filteredData, d => d.OBS_VALUE), d3.max(filteredData, d => d.OBS_VALUE)]);
 
-        //transition 
+        xScale.domain(d3.extent(filteredData, d => new Date(d.TIME_PERIOD)));
+        yScale.domain([
+          d3.min(filteredData, d => d.OBS_VALUE),
+          d3.max(filteredData, d => d.OBS_VALUE)
+        ]);
+
         xAxis.transition().duration(600).call(d3.axisBottom(xScale));
         yAxis.transition().duration(600).call(d3.axisLeft(yScale));
-        
-        // add unique color on each country
+
         var groupedByCountry = d3.group(filteredData, d => d["Reference area"]);
         var color = d3.scaleOrdinal().domain(selectedCountries).range(d3.schemeCategory10);
 
-        svg.selectAll(".line").remove();
+        svg.selectAll(".line, .dot").remove();
 
-        groupedByCountry.forEach((values, key) => {
+        groupedByCountry.forEach((values, country) => {
           svg.append("path")
             .datum(values)
             .attr("class", "line")
             .attr("fill", "none")
-            .attr("stroke", color(key))
-            .attr("stroke-width", 2)
+            .attr("stroke", color(country))
+            .attr("stroke-width", 4)
             .attr("d", line)
             .style("opacity", 0)
-            .transition()
-            .duration(600)
-            .style("opacity", 1);
+            .transition().duration(600).style("opacity", 1);
+
+          values.forEach(d => {
+            svg.append("circle")
+              .attr("class", "dot")
+              .attr("cx", xScale(new Date(d.TIME_PERIOD)))
+              .attr("cy", yScale(d.OBS_VALUE))
+              .attr("r", 5)
+              .attr("fill", color(country))
+              .attr("stroke", "#333")
+              .attr("stroke-width", 1)
+              .style("opacity", 0)
+              .on("mouseover", function (event) {
+                tooltip.style("left", `${event.pageX - 105}px`)
+                  .style("top", `${event.pageY - 400}px`)
+                  .html(`
+                    <strong>Country:</strong> ${country}<br>
+                    <strong>Year:</strong> ${d.TIME_PERIOD}<br>
+                    <strong>Value:</strong> ${d.OBS_VALUE.toFixed(2)}
+                  `)
+                  .classed("visible", true);
+              })
+              .on("mouseout", function () {
+                tooltip.classed("visible", false);
+              })
+              .transition().duration(600).style("opacity", 1);
+          });
         });
-        
-        //legends
+
         var legend = d3.select("#legend");
         legend.html("");
         selectedCountries.forEach(country => {
@@ -371,43 +550,28 @@
           legendItem.append("span").text(country);
         });
 
-        // Table update logic
-        var tableBody = d3.select("#chart_table tbody");
-        tableBody.html("");
+        updateTable();
+      }
 
-        var totalSum = 0;
-        groupedByCountry.forEach(values => {
-          totalSum += d3.sum(values, d => d.OBS_VALUE);
-        });
-
-        groupedByCountry.forEach((values, country) => {
-          var nitrogenValue = selectedNutrient === "NITROGEN" ? d3.sum(values.filter(d => d.Nutrient === "NITROGEN"), d => d.OBS_VALUE) : 0;
-          var phosphorusValue = selectedNutrient === "PHOSPHORUS" ? d3.sum(values.filter(d => d.Nutrient === "PHOSPHORUS"), d => d.OBS_VALUE) : 0;
-          var totalValue = d3.sum(values, d => d.OBS_VALUE) ;
-          var countryRatio = totalSum > 0 ? (totalValue / totalSum * 100).toFixed(2) + "%" : "N/A";
-
-          tableBody.append("tr")
-            .html(`
-              <td>${country}</td>
-              <td>${nitrogenValue.toFixed(2)}</td>
-              <td>${phosphorusValue.toFixed(2)}</td>
-              <td>${totalValue.toFixed(2)}</td>
-              <td>${countryRatio}</td>
-            `);
-        });
-      };
-    // clear country when change measurement methods 
       function clearSelectedCountries() {
         countrySelect.selectAll("option").property("selected", false);
       }
-      
-      measurementSelect.on("change", function () {// update on measurement methods change
+
+      function clearYear() {
+        yearSelect.selectAll("option").property("selected", false);
+      }
+
+      measurementSelect.on("change", function () {
+        clearYear();
         clearSelectedCountries();
+
         var selectedMeasurement = measurementSelect.node().value;
 
         if (
-          flattenedData.some(d => d.Measure === selectedMeasurement && (!d.Nutrient.includes("NITROGEN") 
-          && !d.Nutrient.includes("PHOSPHORUS") && d.Nutrient.includes("N/A")))
+          flattenedData.some(d => d.Measure === selectedMeasurement &&
+            (!d.Nutrient.includes("NITROGEN") &&
+             !d.Nutrient.includes("PHOSPHORUS") &&
+              d.Nutrient.includes("N/A")))
         ) {
           nutrientSelect.selectAll("option").property("disabled", true);
           nutrientSelect.node().value = "TOTAL";
@@ -421,13 +585,15 @@
         updateChart();
       });
 
-      nutrientSelect.on("change", function () { //update on nutrients change
+      nutrientSelect.on("change", function () {
         updateCountry();
         updateChart();
       });
 
-      countrySelect.on("change", updateChart); //update on country change
-      updateCountry();
+      countrySelect.on("change", updateChart);
+      yearSelect.on("change", updateTable); 
+
+      updateCountry(); // Initial load
     });
   </script>
 </body>

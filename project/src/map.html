@@ -20,10 +20,11 @@
       align-items: center;
       box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
-    nav a {
+    nav a { 
       color: #ffffff;
       margin: 0 15px;
       text-decoration: none;
+      font-family: Verdana, Geneva, Tahoma, sans-serif;
       font-weight: bold;
       font-size: 18px;
       padding: 10px 20px;
@@ -37,29 +38,50 @@
 
     #controls {
       display: flex;
+      flex-wrap: wrap;
       justify-content: center;
-      margin: 20px auto;
-      gap: 20px;
-      padding: 10px;
+      gap: 24px;
+      padding: 20px;
       background: #ffffff;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      border-radius: 8px;
-      max-width: 94%;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+      border-radius: 12px;
+      max-width: 93%;
+      margin: 30px auto;
+      transition: all 0.3s ease-in-out;
     }
+
     #controls label {
-      font-size: 16px;
-      color: #333;
-      font-weight: bold;
-    }
-    #controls select {
-      padding: 10px;
-      font-size: 14px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
+      display: flex;
+      flex-direction: column;
+      font-size: 15px;
+      color: #222;
+      font-weight: 600;
+      background-color: #f9f9f9;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid #e0e0e0;
+      min-width: 230px;
       transition: box-shadow 0.3s ease;
     }
+
+    #controls label:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    #controls select {
+      margin-top: 8px;
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background-color: #fff;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
     #controls select:focus {
-      box-shadow: 0 0 5px rgba(0,123,255,0.5);
+      border-color: #007bff;
+      box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
       outline: none;
     }
     #chart-container {
@@ -96,11 +118,20 @@
       transform: translateY(-5px);
     }
     .dynamic-title {
+      font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
       text-align: center;
-      font-size: 28px;
-      font-weight: bold;
-      margin: 15px 0;
-      color: #333;
+      font-size: 26px;
+      font-weight: 700;
+      color: #444;
+      margin: 20px 0;
+      padding: 12px;
+      background: #f0f4ff;
+      border-left: 6px solid #0056b3;
+      border-radius: 8px;
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
     }
     .legend {
       position: absolute;
@@ -150,7 +181,7 @@
       <select id="yearSelect"></select>
     </label>
     <label>
-      Select Measure:
+      Select Measurement Methods:
       <select id="measureSelect"></select>
     </label>
     <label>
